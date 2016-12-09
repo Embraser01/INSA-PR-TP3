@@ -79,4 +79,9 @@ public class Response {
 
         return byteArrayOutputStream.toByteArray();
     }
+
+
+    public static Response notFound() {
+        return new Response(404, "Not Found");
+    }
 }
