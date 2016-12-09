@@ -8,6 +8,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 
 /**
  * Example program from Chapter 1 Programming Spiders, Bots and Aggregators in
@@ -62,7 +63,7 @@ public class WebServer {
                 BufferedReader in = new BufferedReader(new InputStreamReader(
                         remote.getInputStream()));
 
-                OutputStream out = remote.getOutputStream();
+                BufferedOutputStream out = new BufferedOutputStream(remote.getOutputStream());
 
                 Request req;
                 Response res;
@@ -93,6 +94,8 @@ public class WebServer {
     private Response handleRequest(Request req) {
 
         Response res = null;
+        File f = null;
+
 
         switch (req.getMethod()) {
 
@@ -100,7 +103,7 @@ public class WebServer {
 
                 // STATIC
 
-                File f = new File(HTML_FOLDER +
+                f = new File(HTML_FOLDER +
                         (req.getPath().equals("/") ?
                                 INDEX :
                                 req.getPath()));
@@ -122,6 +125,38 @@ public class WebServer {
                 }
                 break;
             case POST:
+                // STATIC
+
+                f = new File(HTML_FOLDER +
+                        (req.getPath().equals("/") ?
+                                INDEX :
+                                req.getPath()));
+
+                try {
+                    if (f.exists() && f.isFile() && f.getCanonicalPath().startsWith(rootPath) && f.canRead()) {
+
+                        Path path = Paths.get(f.getCanonicalPath());
+
+                        if (!Files.probeContentType(path).equals("text/html")) throw new Exception();
+
+                        res = new Response();
+
+                        res.appendHeader("Content-type", "text/html");
+                        String body = String.join("", Files.readAllLines(path));
+
+                        for (Map.Entry<String, String> entry : req.getParams().entrySet()) {
+                            // {{username}}
+                            body = body.replace("{{" + entry.getKey() + "}}", entry.getValue());
+                        }
+                        res.appendBody(body);
+
+                    } else {
+                        res = new Response(404, "Not Found");
+                    }
+                } catch (Exception e) {
+                    res = new Response(404, "Not Found");
+                }
+                break;
             case HEAD:
             case PUT:
             case DELETE:

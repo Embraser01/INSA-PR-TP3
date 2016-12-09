@@ -52,7 +52,7 @@ public class Request {
 
             // BODY
 
-            int size = Integer.parseInt(headers.getOrDefault("content-size", "0"));
+            int size = Integer.parseInt(headers.getOrDefault("content-length", "0"));
 
             char[] body = new char[size];
 
@@ -61,7 +61,8 @@ public class Request {
 
             // Method, Path, Http version
 
-            String method = requestLine[0].toUpperCase();
+            METHOD method = METHOD.valueOf(requestLine[0].toUpperCase());
+
             String path;
 
             if (headers.containsKey("host")) {
@@ -79,8 +80,14 @@ public class Request {
 
             HashMap<String, String> params = null;
 
-            if (parts.length > 1) {
-                String[] paramList = parts[1].split("&");
+            String paramsStr = parts.length > 1 ? parts[1] + "&" : "";
+
+            if (method == METHOD.POST) {
+                paramsStr += new String(body);
+            }
+
+            if (!paramsStr.isEmpty()) {
+                String[] paramList = paramsStr.split("&");
                 String[] param;
 
                 params = new HashMap<>(paramList.length);
@@ -91,7 +98,7 @@ public class Request {
                 }
             }
 
-            return new Request(METHOD.valueOf(method), path, new String(body), headers, params);
+            return new Request(method, path, new String(body), headers, params);
         } catch (Exception e) {
             throw new MalformedRequestException();
         }
@@ -109,8 +116,12 @@ public class Request {
         return body;
     }
 
-    public String getParams(String key) {
+    public String getParam(String key) {
         return params.get(key);
+    }
+
+    public HashMap<String, String> getParams() {
+        return params;
     }
 
     public String getHeaders(String key) {
