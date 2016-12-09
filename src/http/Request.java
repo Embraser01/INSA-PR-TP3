@@ -1,6 +1,7 @@
 package http;
 
 
+import java.io.BufferedReader;
 import java.util.HashMap;
 import java.net.URL;
 
@@ -24,28 +25,41 @@ public class Request {
         this.params = params;
     }
 
-    public static Request build(String request) throws MalformedRequestException {
+    public static Request build(BufferedReader in) throws MalformedRequestException {
 
         try {
-            String[] requestLine;
-            String[] parts = request.split("\r\n\r\n");
-            String[] lines = parts[0].split("\r\n");
-            String body = parts[1];
+            // read the data sent. We basically ignore it,
+            // stop reading once a blank line is hit. This
+            // blank line signals the end of the client HTTP
+            // headers.
+            String str = ".";
+            String[] requestLine = in.readLine().split(" ");
 
-            String[] header;
 
             // Headers
 
-            HashMap<String, String> headers = new HashMap<>(lines.length - 1);
+            String[] header;
+            HashMap<String, String> headers = new HashMap<>();
 
-            for (int i = 1; i < lines.length; i++) {
-                header = lines[i].split(":", 2);
-                headers.put(header[0].toLowerCase(), header[1].trim());
+            while (!str.equals("")) {
+                str = in.readLine();
+
+                if (!str.equals("")) {
+                    header = str.split(":", 2);
+                    headers.put(header[0].toLowerCase(), header[1].trim());
+                }
             }
 
-            // Method, Path, Http version
+            // BODY
 
-            requestLine = lines[0].split(" ");
+            int size = Integer.parseInt(headers.getOrDefault("content-size", "0"));
+
+            char[] body = new char[size];
+
+            if (in.read(body, 0, size) < size) throw new Exception();
+
+
+            // Method, Path, Http version
 
             String method = requestLine[0].toUpperCase();
             String path;
@@ -59,7 +73,9 @@ public class Request {
 
             // TODO Decode %0x..
 
-            parts = path.split("\\?", 2);
+            // PARAMS
+
+            String[] parts = path.split("\\?", 2);
 
             HashMap<String, String> params = null;
 
@@ -75,8 +91,7 @@ public class Request {
                 }
             }
 
-            return new Request(METHOD.valueOf(method), path, body, headers, params);
-
+            return new Request(METHOD.valueOf(method), path, new String(body), headers, params);
         } catch (Exception e) {
             throw new MalformedRequestException();
         }

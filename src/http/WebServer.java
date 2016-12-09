@@ -21,8 +21,8 @@ import java.nio.file.Paths;
  */
 public class WebServer {
 
-    public static String HTML_FOLDER = "./www/";
-    public static String INDEX = "index.html";
+    private static String HTML_FOLDER = "./www";
+    private static String INDEX = "/index.html";
 
     private String rootPath = null;
 
@@ -46,6 +46,7 @@ public class WebServer {
         File root = new File(HTML_FOLDER);
         try {
             rootPath = root.getCanonicalPath();
+            System.out.println("Load content from " + rootPath);
         } catch (IOException e) {
             System.out.println("Error: " + e);
         }
@@ -62,19 +63,11 @@ public class WebServer {
                         remote.getInputStream()));
                 PrintWriter out = new PrintWriter(remote.getOutputStream());
 
-                // read the data sent. We basically ignore it,
-                // stop reading once a blank line is hit. This
-                // blank line signals the end of the client HTTP
-                // headers.
-                String str = ".";
-                Request req = null;
-                Response res = null;
-
-                while (!str.equals(""))
-                    str += in.readLine() + "\r\n";
+                Request req;
+                Response res;
 
                 try {
-                    req = Request.build(str);
+                    req = Request.build(in); // Bloc until ful request
 
                     // Handle Request
 
