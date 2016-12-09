@@ -61,7 +61,8 @@ public class WebServer {
                 System.out.println("Connection, sending data.");
                 BufferedReader in = new BufferedReader(new InputStreamReader(
                         remote.getInputStream()));
-                PrintWriter out = new PrintWriter(remote.getOutputStream());
+
+                OutputStream out = remote.getOutputStream();
 
                 Request req;
                 Response res;
@@ -78,7 +79,7 @@ public class WebServer {
 
                 if (res != null) {
                     res.appendHeader("Server", "BADASS");
-                    out.print(res.toString());
+                    out.write(res.getBytes());
                     out.flush();
                 }
                 remote.close();
@@ -111,11 +112,7 @@ public class WebServer {
                         res = new Response();
 
                         res.appendHeader("Content-type", Files.probeContentType(path));
-                        res.appendBody(
-                                String.join("",
-                                        Files.readAllLines(path)
-                                )
-                        );
+                        res.appendBody(Files.readAllBytes(path));
 
                     } else {
                         res = new Response(404, "Not Found");

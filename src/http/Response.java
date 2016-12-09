@@ -1,5 +1,8 @@
 package http;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,7 +10,7 @@ public class Response {
 
 
     private int statusCode;
-    private String body;
+    private ByteArrayOutputStream body;
     private HashMap<String, String> headers;
 
 
@@ -25,8 +28,14 @@ public class Response {
 
     public Response(int statusCode, String body) {
         this.statusCode = statusCode;
-        this.body = body;
-        headers = new HashMap<>();
+        this.body = new ByteArrayOutputStream();
+        this.headers = new HashMap<>();
+
+        try {
+            this.body.write(body.getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -35,11 +44,24 @@ public class Response {
     }
 
     public void appendBody(String part) {
-        body += part;
+        try {
+            body.write(part.getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    @Override
-    public String toString() {
+    public void appendBody(byte[] bytes) {
+        try {
+            this.body.write(bytes);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public byte[] getBytes() {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
         String res = "HTTP/1.0 " + statusCode + " " + statusCode + "\r\n";
 
         for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -47,8 +69,14 @@ public class Response {
         }
 
         res += "\r\n";
-        res += body.isEmpty() ? "Default Web Page" : body;
 
-        return res;
+        try {
+            byteArrayOutputStream.write(res.getBytes());
+            byteArrayOutputStream.write(body.size() == 0 ? "Default Web Page".getBytes() : body.toByteArray());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return byteArrayOutputStream.toByteArray();
     }
 }
