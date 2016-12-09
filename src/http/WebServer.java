@@ -2,16 +2,17 @@
 
 package http;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Example program from Chapter 1 Programming Spiders, Bots and Aggregators in
  * Java Copyright 2001 by Jeff Heaton
- *
+ * <p>
  * WebServer is a very simple web-server. Any request is responded with a very
  * simple web-page.
  *
@@ -19,6 +20,11 @@ import java.net.Socket;
  * @version 1.0
  */
 public class WebServer {
+
+    public static String HTML_FOLDER = "./www/";
+    public static String INDEX = "index.html";
+
+    private String rootPath = null;
 
     /**
      * WebServer constructor.
@@ -36,8 +42,17 @@ public class WebServer {
             return;
         }
 
+        //
+        File root = new File(HTML_FOLDER);
+        try {
+            rootPath = root.getCanonicalPath();
+        } catch (IOException e) {
+            System.out.println("Error: " + e);
+        }
+
+
         System.out.println("Waiting for connection");
-        for (;;) {
+        for (; ; ) {
             try {
                 // wait for a connection
                 Socket remote = s.accept();
@@ -52,23 +67,77 @@ public class WebServer {
                 // blank line signals the end of the client HTTP
                 // headers.
                 String str = ".";
-                while (!str.equals(""))
-                    str = in.readLine();
+                Request req = null;
+                Response res = null;
 
-                // Send the response
-                // Send the headers
-                out.println("HTTP/1.0 200 OK");
-                out.println("Content-Type: text/html");
-                out.println("Server: Bot");
-                // this blank line signals the end of the headers
-                out.println("");
-                // Send the HTML page
-                out.println("<H1>Welcome to the Ultra Mini-WebServer</H2>");
-                out.flush();
+                while (!str.equals(""))
+                    str += in.readLine() + "\r\n";
+
+                try {
+                    req = Request.build(str);
+
+                    // Handle Request
+
+                    res = handleRequest(req);
+                } catch (Request.MalformedRequestException ex) {
+                    res = new Response(400);
+                }
+
+                if (res != null) {
+                    res.appendHeader("Server", "BADASS");
+                    out.print(res.toString());
+                    out.flush();
+                }
                 remote.close();
             } catch (Exception e) {
                 System.out.println("Error: " + e);
             }
         }
+    }
+
+
+    private Response handleRequest(Request req) {
+
+        Response res = null;
+
+        switch (req.getMethod()) {
+
+            case GET:
+
+                // STATIC
+
+                File f = new File(HTML_FOLDER +
+                        (req.getPath().equals("/") ?
+                                INDEX :
+                                req.getPath()));
+
+                try {
+                    if (f.exists() && f.isFile() && f.getCanonicalPath().startsWith(rootPath) && f.canRead()) {
+
+                        Path path = Paths.get(f.getCanonicalPath());
+                        res = new Response();
+
+                        res.appendHeader("Content-type", Files.probeContentType(path));
+                        res.appendBody(
+                                String.join("",
+                                        Files.readAllLines(path)
+                                )
+                        );
+
+                    } else {
+                        res = new Response(404, "Not Found");
+                    }
+                } catch (IOException e) {
+                    res = new Response(404, "Not Found");
+                }
+                break;
+            case POST:
+            case HEAD:
+            case PUT:
+            case DELETE:
+                res = new Response(501, "Not yet implemented");
+                break;
+        }
+        return res;
     }
 }

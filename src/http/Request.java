@@ -6,6 +6,7 @@ import java.net.URL;
 
 public class Request {
 
+
     public enum METHOD {GET, POST, HEAD, PUT, DELETE}
 
     private METHOD method;
@@ -81,6 +82,25 @@ public class Request {
         }
     }
 
+    public METHOD getMethod() {
+        return method;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public String getBody() {
+        return body;
+    }
+
+    public String getParams(String key) {
+        return params.get(key);
+    }
+
+    public String getHeaders(String key) {
+        return headers.get(key);
+    }
 
     public static class MalformedRequestException extends Exception {
 

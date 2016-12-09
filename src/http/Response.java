@@ -15,11 +15,20 @@ public class Response {
         this(200);
     }
 
+    public Response(String message) {
+        this(200, message);
+    }
+
     public Response(int statusCode) {
+        this(statusCode, "");
+    }
+
+    public Response(int statusCode, String body) {
         this.statusCode = statusCode;
-        body = "";
+        this.body = body;
         headers = new HashMap<>();
     }
+
 
     public void appendHeader(String key, String value) {
         headers.put(key, value);
