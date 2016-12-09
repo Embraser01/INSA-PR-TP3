@@ -81,27 +81,21 @@ public class RequestHandler extends Thread {
     private Response handleRequest(Request req) {
 
         Response res = null;
-        File f;
+        Path path;
 
         switch (req.getMethod()) {
 
             case GET:
 
                 // STATIC
-
-                f = new File(HTML_FOLDER +
-                        (req.getPath().equals("/") ?
-                                INDEX :
-                                req.getPath()));
-
+                path = getStaticFile(req.getPath());
                 try {
-                    if (f.exists() && f.isFile() && f.getCanonicalPath().startsWith(rootPath) && f.canRead()) {
+                    if (path != null) {
 
-                        Path path = Paths.get(f.getCanonicalPath());
                         res = new Response();
-
                         res.appendHeader("Content-type", Files.probeContentType(path));
                         res.appendBody(Files.readAllBytes(path));
+
 
                     } else {
                         res = Response.notFound();
@@ -113,17 +107,12 @@ public class RequestHandler extends Thread {
             case POST:
                 // STATIC
 
-                f = new File(HTML_FOLDER +
-                        (req.getPath().equals("/") ?
-                                INDEX :
-                                req.getPath()));
+                path = getStaticFile(req.getPath());
 
                 try {
-                    if (f.exists() && f.isFile() && f.getCanonicalPath().startsWith(rootPath) && f.canRead()) {
+                    if (path != null
+                            && !Files.probeContentType(path).equals("text/html")) {
 
-                        Path path = Paths.get(f.getCanonicalPath());
-
-                        if (!Files.probeContentType(path).equals("text/html")) throw new Exception();
 
                         res = new Response();
 
@@ -139,11 +128,27 @@ public class RequestHandler extends Thread {
                     } else {
                         res = Response.notFound();
                     }
-                } catch (Exception e) {
+                } catch (IOException e) {
                     res = Response.notFound();
                 }
                 break;
             case HEAD:
+                // STATIC
+                path = getStaticFile(req.getPath());
+                try {
+                    if (path != null) {
+
+                        res = new Response();
+                        res.appendHeader("Content-type", Files.probeContentType(path));
+
+                    } else {
+                        res = Response.notFound();
+                    }
+                } catch (IOException e) {
+                    res = Response.notFound();
+                }
+                break;
+
             case PUT:
             case DELETE:
                 res = new Response(501, "Not yet implemented");
@@ -154,7 +159,7 @@ public class RequestHandler extends Thread {
 
     public void sendOverloadMsg() {
         if (running) {
-            System.out.println("ERROR : Thread running where it shouldn't");
+            System.out.println("ERROR : Thread is running where it should not");
         } else {
             Response res = new Response(500, "The server is currently overload, try again later !");
             try {
@@ -164,5 +169,20 @@ public class RequestHandler extends Thread {
                 System.out.println("Unable to send data");
             }
         }
+    }
+
+    private Path getStaticFile(String path) {
+        File f = new File(HTML_FOLDER +
+                (path.equals("/") ?
+                        INDEX :
+                        path));
+
+        try {
+            if (f.exists() && f.isFile() && f.getCanonicalPath().startsWith(rootPath) && f.canRead()) {
+                return Paths.get(f.getCanonicalPath());
+            }
+        } catch (IOException ignored) {
+        }
+        return null;
     }
 }
