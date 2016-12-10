@@ -57,7 +57,7 @@ public class WebServer {
 
         // Starting the server
 
-        System.out.printf("Webserver starting up on port %d", port);
+        System.out.printf("Webserver starting up on port %d\n", port);
         System.out.println("(Press Ctrl-C to exit)");
 
         try {
@@ -68,7 +68,7 @@ public class WebServer {
             return;
         }
 
-        System.out.printf("Listening HTTP Request on port %d", port);
+        System.out.printf("Listening HTTP Request on port %d\n", port);
 
         //noinspection InfiniteLoopStatement
         for (; ; ) {

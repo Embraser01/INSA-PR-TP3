@@ -165,7 +165,7 @@ public class RequestHandler extends Thread {
             case POST:
                 try {
                     if (path != null
-                            && !Files.probeContentType(path).equals("text/html")) {
+                            && Files.probeContentType(path).equals("text/html")) {
 
                         res = new Response();
 
