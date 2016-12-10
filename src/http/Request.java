@@ -5,52 +5,99 @@ import java.io.BufferedReader;
 import java.util.HashMap;
 import java.net.URL;
 
+
+/**
+ * Representation of a Request.
+ * Can also build a Request from an input stream
+ *
+ * @author Tristan Bourvon
+ * @author Marc-Antoine FERNANDES
+ * @version 1.0.0
+ */
 public class Request {
 
 
-    public enum METHOD {GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE}
+    /**
+     * List of all methods allowed by HTTP/1.1
+     */
+    public enum METHOD {
+        GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE
+    }
 
+    /**
+     * method use by the request
+     */
     private METHOD method;
+
+    /**
+     * Path of the request
+     * (e.g. : "GET www.example.com/path/to/data/1.html", path will be : "/path/to/data/1.html")
+     */
     private String path;
+
+    /**
+     * Body of the request
+     */
     private String body;
 
+    /**
+     * List of all the params of the request (GET & POST mix)
+     */
     private HashMap<String, String> params;
+
+    /**
+     * List of all the headers send by the client
+     */
     private HashMap<String, String> headers;
 
 
+    /**
+     * Constructor of the request, it's private because a Request can only be build by {@link #build(BufferedReader)}.
+     *
+     * @param method  see {@link #method}
+     * @param path    see {@link #path}
+     * @param headers see {@link #headers}
+     * @param params  see {@link #params}
+     */
     private Request(METHOD method, String path, String body, HashMap<String, String> headers, HashMap<String, String> params) {
         this.method = method;
         this.path = path;
         this.body = body;
+        this.headers = headers;
         this.params = params;
     }
 
+    /**
+     * Request builder, it builds the request from a InputStream.
+     *
+     * @param in Input stream
+     * @return a well formed request
+     * @throws MalformedRequestException when we cannot parse the input stream
+     */
     public static Request build(BufferedReader in) throws MalformedRequestException {
 
         try {
-            // read the data sent. We basically ignore it,
-            // stop reading once a blank line is hit. This
-            // blank line signals the end of the client HTTP
-            // headers.
-            String str = ".";
-            String[] requestLine = in.readLine().split(" ");
+            // First line of the request
 
+            String[] requestLine = in.readLine().split(" ");
 
             // Headers
 
             String[] header;
             HashMap<String, String> headers = new HashMap<>();
 
+            String str = ".";
             while (!str.equals("")) {
                 str = in.readLine();
 
+                // If it's not an empty line
                 if (!str.equals("")) {
                     header = str.split(":", 2);
                     headers.put(header[0].toLowerCase(), header[1].trim());
                 }
             }
 
-            // BODY
+            // Body
 
             int size = Integer.parseInt(headers.getOrDefault("content-length", "0"));
 
@@ -72,7 +119,8 @@ public class Request {
                 path = url.getPath() + "?" + url.getQuery();
             }
 
-            // TODO Decode %0x..
+            // Decoding path
+            path = java.net.URLDecoder.decode(path, "UTF-8");
 
             // PARAMS
 
@@ -100,34 +148,58 @@ public class Request {
 
             return new Request(method, path, new String(body), headers, params);
         } catch (Exception e) {
+            // We convert any Exception to a MalformedRequestException
             throw new MalformedRequestException();
         }
     }
 
+    /**
+     * @return method used
+     */
     public METHOD getMethod() {
         return method;
     }
 
+    /**
+     * @return path asked by the request
+     */
     public String getPath() {
         return path;
     }
 
+    /**
+     * @return body of the request
+     */
     public String getBody() {
         return body;
     }
 
+    /**
+     * @param key param name
+     * @return param value or ""
+     */
     public String getParam(String key) {
-        return params.get(key);
+        return params.getOrDefault(key, "");
     }
 
+    /**
+     * @return return all parameters
+     */
     public HashMap<String, String> getParams() {
         return params;
     }
 
+    /**
+     * @param key header name
+     * @return header value or ""
+     */
     public String getHeaders(String key) {
-        return headers.get(key);
+        return headers.getOrDefault(key, "");
     }
 
+    /**
+     * Custom Exception
+     */
     public static class MalformedRequestException extends Exception {
 
     }
