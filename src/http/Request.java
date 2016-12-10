@@ -41,7 +41,7 @@ public class Request {
     private String body;
 
     /**
-     * List of all the params of the request (GET & POST mix)
+     * List of all the params of the request (GET and POST mix)
      */
     private HashMap<String, String> params;
 
@@ -56,6 +56,7 @@ public class Request {
      *
      * @param method  see {@link #method}
      * @param path    see {@link #path}
+     * @param body    see {@link #body}
      * @param headers see {@link #headers}
      * @param params  see {@link #params}
      */
