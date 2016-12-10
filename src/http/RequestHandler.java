@@ -199,7 +199,8 @@ public class RequestHandler extends Thread {
     }
 
     /**
-     * Search the file and check if it's in {@link #WWW_FOLDER}. If it is, return the canonical path, Otherwise, return null
+     * Search the file and check if it's in {@link #WWW_FOLDER}.
+     * If it is, return the canonical path, Otherwise, return null
      *
      * @param path relative path to the resource
      * @return canonical path to the resource
