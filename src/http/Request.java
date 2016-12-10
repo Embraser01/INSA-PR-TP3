@@ -136,6 +136,7 @@ public class Request {
             }
 
             if (!paramsStr.isEmpty()) {
+                paramsStr = java.net.URLDecoder.decode(paramsStr, "UTF-8");
                 String[] paramList = paramsStr.split("&");
                 String[] param;
 

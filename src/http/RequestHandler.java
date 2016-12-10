@@ -25,9 +25,9 @@ public class RequestHandler extends Thread {
     private final static String WWW_FOLDER = "./www";
 
     /**
-     * File to serve when the user ask for '/'
+     * File to serve when path is a folder (last char = '/')
      */
-    private final static String INDEX = "/index.html";
+    private final static String INDEX = "index.html";
 
     /**
      * Canonical path to {@link #WWW_FOLDER}
@@ -206,8 +206,8 @@ public class RequestHandler extends Thread {
      */
     private Path getStaticFile(String path) {
         File f = new File(WWW_FOLDER +
-                (path.equals("/") ?
-                        INDEX :
+                (path.charAt(path.length() - 1) == '/' ?
+                        path + INDEX :
                         path));
 
         try {
