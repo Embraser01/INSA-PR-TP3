@@ -8,7 +8,7 @@ import java.net.URL;
 public class Request {
 
 
-    public enum METHOD {GET, POST, HEAD, PUT, DELETE}
+    public enum METHOD {GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE}
 
     private METHOD method;
     private String path;

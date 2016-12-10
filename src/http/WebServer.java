@@ -1,5 +1,3 @@
-///A Simple Web Server (WebServer.java)
-
 package http;
 
 import java.io.*;
@@ -8,25 +6,38 @@ import java.net.Socket;
 import java.util.concurrent.*;
 
 /**
- * Example program from Chapter 1 Programming Spiders, Bots and Aggregators in
- * Java Copyright 2001 by Jeff Heaton
- * <p>
- * WebServer is a very simple web-server. Any request is responded with a very
- * simple web-page.
+ * WebServer is the core of the application.
+ * This class start listening to incoming connection when
+ * {@link #start(int)} is called.
+ * Each request is traited in a different Thread, managed by a {@link ThreadPoolExecutor}
  *
- * @author Jeff Heaton
- * @version 1.0
+ * @author Tristan Bourvon
+ * @author Marc-Antoine FERNANDES
+ * @version 1.0.0
  */
 public class WebServer {
 
+    /**
+     * Number of Thread executed simultaneously
+     */
     private static final int THREAD_POOL_CORE_SIZE = 10;
+
+    /**
+     * Number max of Thread in the ThreadPool
+     */
     private static final int THREAD_POOL_MAX_SIZE = 30;
+
+    /**
+     * Time in seconds before a request timeout
+     */
     private static final int REQUEST_TIMEOUT = 20;
 
     /**
-     * WebServer constructor.
+     * Method to start the application
+     *
+     * @param port Port to listen to
      */
-    public void start() {
+    public void start(int port) {
         ServerSocket s;
 
         // Thread Pool initialisation
@@ -46,18 +57,20 @@ public class WebServer {
 
         // Starting the server
 
-        System.out.println("Webserver starting up on port 80");
-        System.out.println("(press ctrl-c to exit)");
+        System.out.printf("Webserver starting up on port %d", port);
+        System.out.println("(Press Ctrl-C to exit)");
+
         try {
-            // create the main server socket
-            s = new ServerSocket(80);
+            // Create the main server socket
+            s = new ServerSocket(port);
         } catch (Exception e) {
-            System.out.println("Error: " + e);
+            System.out.println("Error on WebServer#start(): " + e);
             return;
         }
 
-        System.out.println("Waiting for connection");
+        System.out.printf("Listening HTTP Request on port %d", port);
 
+        //noinspection InfiniteLoopStatement
         for (; ; ) {
             try {
                 // wait for a connection
@@ -65,8 +78,7 @@ public class WebServer {
                 // remote is now the connected socket
                 poolExecutor.execute(new RequestHandler(remote));
 
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (IOException ignored) {
             }
         }
     }
